@@ -1,5 +1,5 @@
 const express = require('express');
-const mysql = require('mysql2');
+const mongoose = require('mongoose');
 const config = require('./config/config.json');
 const authRoutes = require('./routes/auth');
 const terrainRoutes = require('./routes/terrains');
@@ -12,32 +12,10 @@ const app = express();
 // Middleware
 app.use(express.json());
 
-// Create MySQL connection pool
-const pool = mysql.createPool({
-  host: config.mysqlHost,
-  user: config.mysqlUser,
-  password: config.mysqlPassword,
-  database: config.mysqlDatabase,
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0
-});
-
-// Test database connection
-pool.getConnection((err, connection) => {
-  if (err) {
-    console.error('Error connecting to MySQL:', err);
-  } else {
-    console.log('Connected to MySQL database');
-    connection.release();
-  }
-});
-
-// Make db pool available to routes
-app.use((req, res, next) => {
-  req.db = pool.promise();
-  next();
-});
+// Connect to MongoDB
+mongoose.connect(config.mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => console.log('Connected to MongoDB'))
+  .catch(err => console.error('Could not connect to MongoDB', err));
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -47,5 +25,4 @@ app.use('/api/reservations', reservationRoutes);
 app.use('/api/users', userRoutes);
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
